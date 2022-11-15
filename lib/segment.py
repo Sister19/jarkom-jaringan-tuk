@@ -1,19 +1,38 @@
 import struct
 
 # Constants 
-SYN_FLAG = 0b00000001
-ACK_FLAG = 0b00000100
-FIN_FLAG = 0b00000000
+SYN_FLAG = 0b00000010
+ACK_FLAG = 0b00001000
+FIN_FLAG = 0b00000001
 
 class SegmentFlag:
     def __init__(self, flag : bytes):
         # Init flag variable from flag byte
-        self.flag = flag
-        pass
+        self.syn = bool(SYN_FLAG & flag)
+        self.ack = bool(ACK_FLAG & flag)
+        self.fin = bool(FIN_FLAG & flag)
 
     def get_flag_bytes(self) -> bytes:
         # Convert this object to flag in byte form
-        return self.flag
+        flag_result  = 0b0
+        if (self.syn):
+            flag_result |= SYN_FLAG
+            if (self.ack):
+                flag_result |= ACK_FLAG 
+                if (self.fin):
+                    flag_result |= FIN_FLAG
+            else:
+                if (self.fin):
+                    flag_result |= FIN_FLAG
+        else:
+            if (self.ack):
+                flag_result |= ACK_FLAG
+                if (self.fin):
+                    flag_result |= FIN_FLAG
+            else:
+                if (self.fin):
+                    flag_result |= FIN_FLAG
+        return struct.pack("B", flag_result)
 
 
 
@@ -25,8 +44,7 @@ class Segment:
         self.header = {}
         self.flag = SegmentFlag(0b0)
         self.checksum = 0
-        self.payload = 0b0
-        pass
+        self.payload = b""
 
     def __str__(self):
         # Optional, override this method for easier print(segmentA)
@@ -35,7 +53,9 @@ class Segment:
         ack_num = self.header["ack_num"]
         output += f"{'Sequence number':24} | {seq_num}\n"
         output += f"{'Acknowledge number':24} | {ack_num}\n"
-        output += f"{'Flag':24} | {self.flag}\n"
+        output += f"{'SYN Flag':24} | {self.flag.syn}\n"
+        output += f"{'ACK Flag':24} | {self.flag.ack}\n"
+        output += f"{'FIN Flag':24} | {self.flag.fin}\n"
         output += f"{'Checksum':24} | {self.checksum}\n"
         output += f"{'Payload':24} | {self.payload}\n"
         return output
@@ -47,16 +67,17 @@ class Segment:
 
     # -- Setter --
     def set_header(self, header : dict):
-        self.header = header
-        pass
+        self.header["seq_num"] = header["seq_num"]
+        self.header["ack_num"] = header["ack_num"]
 
     def set_payload(self, payload : bytes):
         self.payload = payload
-        pass
 
     def set_flag(self, flag_list : list):
-        self.flag = flag_list[0]
-        pass
+        flag_result = 0b0
+        for flag in flag_list:
+            flag_result |= flag
+        self.flag = SegmentFlag(flag_result)
 
 
     # -- Getter --
