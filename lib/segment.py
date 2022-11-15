@@ -94,14 +94,27 @@ class Segment:
     # -- Marshalling --
     def set_from_bytes(self, src : bytes):
         # From pure bytes, unpack() and set into python variable
-        pass
+        self.header["seq_num"] = struct.unpack("I", src[0:4])
+        self.header["ack_num"] = struct.unpack("I", src[4:8])
+        self.flag = SegmentFlag(struct.unpack("B", src[8:9]))
+        self.checksum = struct.unpack("H", src[10:12])
+        self.payload = src[12:]
 
     def get_bytes(self) -> bytes:
         # Convert this object to pure bytes
-        pass
+        self.checksum = self.__calculate_checksum()
+
+        bytes_result = b""
+        bytes_result += struct.pack("I", self.header["seq_num"])
+        bytes_result += struct.pack("I", self.header["ack_num"])
+        bytes_result += self.flag.get_flag_bytes()
+        bytes_result += struct.pack("x")
+        bytes_result += struct.pack("H", self.checksum)
+        bytes_result += self.payload
+        return bytes_result
 
 
     # -- Checksum --
     def valid_checksum(self) -> bool:
         # Use __calculate_checksum() and check integrity of this object
-        pass
+        return self.__calculate_checksum() == 0x0000 # 4 bit (int type)
