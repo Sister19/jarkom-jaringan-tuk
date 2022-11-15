@@ -32,7 +32,7 @@ class SegmentFlag:
             else:
                 if (self.fin):
                     flag_result |= FIN_FLAG
-        return struct.pack("B", flag_result)
+        return struct.pack("<B", flag_result)
 
 
 
@@ -62,7 +62,23 @@ class Segment:
 
     def __calculate_checksum(self) -> int:
         # Calculate checksum here, return checksum result
-        pass
+        # using 16 bits datasum
+        seq_num = struct.pack("<I", self.header["seq_num"])
+        ack_num = struct.pack("<I", self.header["ack_num"])
+        flag = self.flag.get_flag_bytes()
+        empty_padding = struct.pack("x")
+        payload = self.payload
+        # sum all except self.checksum
+        datasum = seq_num + ack_num + flag + empty_padding + payload
+        data = datasum.hex()
+        # split data into 2 bytes
+        data = [data[i : i + 2] for i in range(0, len(data), 2)]
+        # sum all data in 16 bits
+        checksum = 0
+        for i in data:
+            checksum += int(i, 16)
+        # get last 16 bits checksum
+        return checksum & 0xFFFF
 
 
     # -- Setter --
@@ -94,10 +110,10 @@ class Segment:
     # -- Marshalling --
     def set_from_bytes(self, src : bytes):
         # From pure bytes, unpack() and set into python variable
-        self.header["seq_num"] = struct.unpack("I", src[0:4])
-        self.header["ack_num"] = struct.unpack("I", src[4:8])
-        self.flag = SegmentFlag(struct.unpack("B", src[8:9]))
-        self.checksum = struct.unpack("H", src[10:12])
+        self.header["seq_num"] = struct.unpack("<I", src[0:4])
+        self.header["ack_num"] = struct.unpack("<I", src[4:8])
+        self.flag = SegmentFlag(struct.unpack("<B", src[8:9]))
+        self.checksum = struct.unpack("<H", src[10:12])
         self.payload = src[12:]
 
     def get_bytes(self) -> bytes:
@@ -105,11 +121,11 @@ class Segment:
         self.checksum = self.__calculate_checksum()
 
         bytes_result = b""
-        bytes_result += struct.pack("I", self.header["seq_num"])
-        bytes_result += struct.pack("I", self.header["ack_num"])
+        bytes_result += struct.pack("<I", self.header["seq_num"])
+        bytes_result += struct.pack("<I", self.header["ack_num"])
         bytes_result += self.flag.get_flag_bytes()
         bytes_result += struct.pack("x")
-        bytes_result += struct.pack("H", self.checksum)
+        bytes_result += struct.pack("<H", self.checksum)
         bytes_result += self.payload
         return bytes_result
 
@@ -117,4 +133,4 @@ class Segment:
     # -- Checksum --
     def valid_checksum(self) -> bool:
         # Use __calculate_checksum() and check integrity of this object
-        return self.__calculate_checksum() == 0x0000 # 4 bit (int type)
+        return self.__calculate_checksum() == 0x0000 # 16 bits
