@@ -5,6 +5,7 @@ import lib.segment as segment
 IP = "127.0.0.1"
 PORT = 1234
 BROADCAST_PORT = 3000
+N = 4
 
 class Client:
     def __init__(self):
@@ -49,7 +50,31 @@ class Client:
 
     def listen_file_transfer(self):
         # File transfer, client-side
+        segment_list = []
+        sequence_base = 0
+        sequence_add = 0
         print("Receiving file...")
+        while True:
+            addr, segment_response = self.conn.listen_single_segment()
+            print(segment_response.valid_checksum())
+            # if addr == (IP, BROADCAST_PORT) and segment_response.flag.fin:
+            #     self.conn.close_socket()
+            #     break
+
+            # if addr == (IP, BROADCAST_PORT) and not segment_response.flag.ack and not segment_response.flag.fin and segment_response.flag.syn:
+            #     segment_list.append(segment_response)
+            #     sequence_base += 1
+                
+            # if sequence_base - sequence_add == N:
+            #     message_ACK = Segment()
+            #     message_ACK.set_header({
+            #         "seq_num": 0,
+            #         "ack_num":0
+            #     })
+            #     message_ACK.set_flag([segment.ACK_FLAG])
+            #     self.conn.send_data(message_ACK, addr)
+
+        
         print("File received")
 
 

@@ -5,7 +5,7 @@ import socket
 
 IP = "127.0.0.1"
 PORT = 3000
-FILE = "README.md"
+FILE = "music.m4a"
 N = 3
 
 class Server:
@@ -80,17 +80,47 @@ class Server:
         sequence_base = 0
         sequence_max = N
         with open(FILE, "rb") as file:
-            while True:
-                file.seek(32756 * sequence_base)
-                addr, segment_response = self.conn.listen_single_segment()
-                if (addr == client_addr and segment_response.header["ack_num"] > sequence_base):
-                    sequence_max = (sequence_max - sequence_base) + segment_response.header["ack_num"]
-                    sequence_base = segment_response.header["ack_num"]
-                
-                if :
+            total_segment_number = file.tell() // 32756 if file.tell() % 32756 == 0  else (file.tell() // 32756) + 1
+            # while True:
+            i = sequence_base
+            while i < sequence_max + 1:
+                file.seek(32756 * i)
+                file_bytes = file.read(32756)
 
+                file_segment = Segment()
+                file_segment.set_header({
+                    "seq_num": i,
+                    "ack_num":0
+                })
+
+                file_segment.set_payload(file_bytes)
+                self.conn.send_data(file_segment, client_addr)
+                print(file_segment)
+
+                self.conn.set_timeout(350)
+                try:
+                    addr, segment_response = self.conn.listen_single_segment()
+                    if addr == client_addr and segment_response.flag.ack:
+                        sequence_base += 1
+                        sequence_max += 1
+                        i += 1
+
+                except socket.timeout:
+                    continue
+
+                if sequence_base >= total_segment_number:
+                    break
+
+        message_FIN = Segment()
+        message_FIN.set_header({
+            "seq_num": i,
+            "ack_num":0
+        })
+
+        message_FIN.set_flag([segment.FIN_FLAG])
         print(f"[!] [FIN] Sending FIN..")
-        pass
+        self.conn.send_data(message_FIN, client_addr)
+        print(f"Closing connection")
 
     def three_way_handshake(self, client_addr: ("ip", "port")) -> bool:
        # Three way handshake, server-side, 1 client
