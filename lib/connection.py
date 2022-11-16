@@ -15,7 +15,7 @@ class Connection:
         self.socket.settimeout(DEFAULT_TIMEOUT)
 
 
-    def send_data(self, msg : Segment, dest : tuple[str, int]):
+    def send_data(self, msg : Segment, dest : ("ip", "port")):
         # Send single segment into destination
         self.socket.sendto(msg.get_bytes(), dest)
 
