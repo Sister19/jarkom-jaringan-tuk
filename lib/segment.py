@@ -78,7 +78,9 @@ class Segment:
         for i in data:
             checksum += int(i, 16)
         # get last 16 bits checksum
-        return checksum & 0xFFFF
+        while (checksum > 0xFFFF):
+            checksum = (checksum >> 16) + (checksum & 0xFFFF)
+        return checksum
 
 
     # -- Setter --

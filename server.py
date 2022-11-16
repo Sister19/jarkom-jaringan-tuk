@@ -5,7 +5,7 @@ import socket
 
 IP = "127.0.0.1"
 PORT = 3000
-FILE = "music.m4a"
+FILE = "server.py"
 N = 3
 
 class Server:
