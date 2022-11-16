@@ -5,7 +5,6 @@ import lib.segment as segment
 IP = "127.0.0.1"
 PORT = 1234
 BROADCAST_PORT = 3000
-N = 3
 
 class Client:
     def __init__(self):

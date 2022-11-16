@@ -1,10 +1,13 @@
 from lib.connection import Connection
 from lib.segment import Segment
 import lib.segment as segment
+import socket
 
 IP = "127.0.0.1"
 PORT = 3000
 FILE = "README.md"
+N = 3
+
 class Server:
     def __init__(self):
         # Init server
@@ -73,6 +76,19 @@ class Server:
         #     if no segment is in transmission then
         #         Transmit segments where Sb ≤ Sn ≤ Sm.  
         #         segments are transmitted in order.
+
+        sequence_base = 0
+        sequence_max = N
+        with open(FILE, "rb") as file:
+            while True:
+                file.seek(32756 * sequence_base)
+                addr, segment_response = self.conn.listen_single_segment()
+                if (addr == client_addr and segment_response.header["ack_num"] > sequence_base):
+                    sequence_max = (sequence_max - sequence_base) + segment_response.header["ack_num"]
+                    sequence_base = segment_response.header["ack_num"]
+                
+                if :
+
         print(f"[!] [FIN] Sending FIN..")
         pass
 
@@ -91,16 +107,21 @@ class Server:
         
     
     def three_way_handshake_response(self, client_addr: ("ip", "port")):
-        addr, segment_response = self.conn.listen_single_segment()
+        self.conn.set_timeout(200)
+        try:
+            addr, segment_response = self.conn.listen_single_segment()
 
-        if (
-            segment_response.flag.ack  # Check if request if from client that wants to establish connection
-            and segment_response.valid_checksum()  # check if the request contains no error when transmitting with checksum
-            and addr == client_addr # check if client is already in client list
-        ):
-            print(f"[!] Received ACK response from client {addr}")
-            return True
-        else:
+            if (
+                segment_response.flag.ack  # Check if request if from client that wants to establish connection
+                and segment_response.valid_checksum()  # check if the request contains no error when transmitting with checksum
+                and addr == client_addr # check if client is already in client list
+            ):
+                print(f"[!] Received ACK response from client {addr}")
+                return True
+            else:
+                return False
+        except socket.timeout:
+            print("Lewat timeout")
             return False
 
 
