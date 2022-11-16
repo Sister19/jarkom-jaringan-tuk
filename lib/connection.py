@@ -19,12 +19,12 @@ class Connection:
         # Send single segment into destination
         self.socket.sendto(msg.get_bytes(), dest)
 
-    def listen_single_segment(self) -> Segment:
+    def listen_single_segment(self):
         # Listen single UDP datagram within timeout and convert into segment
         response, address = self.socket.recvfrom(1024)
         data = Segment()
         data.set_from_bytes(response)
-        return data
+        return address, data
 
     def set_timeout(self, timeout):
         self.socket.settimeout(timeout)
