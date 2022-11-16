@@ -112,7 +112,7 @@ class Segment:
         # From pure bytes, unpack() and set into python variable
         self.header["seq_num"] = struct.unpack("<I", src[0:4])
         self.header["ack_num"] = struct.unpack("<I", src[4:8])
-        self.flag = SegmentFlag(struct.unpack("<B", src[8:9]))
+        self.flag = SegmentFlag(struct.unpack("<B", src[8:9])[0])
         self.checksum = struct.unpack("<H", src[10:12])
         self.payload = src[12:]
 
