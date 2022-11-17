@@ -37,7 +37,7 @@ class Client:
         self.three_way_handshake_response()
 
     def three_way_handshake_response(self):
-        self.conn.set_timeout(5)
+        self.conn.set_timeout(10)
         try:
             addr, segment_response = self.conn.listen_single_segment()
 
