@@ -114,15 +114,16 @@ class Client:
 
                         
                 except socket.timeout:
-                    print(f"\n[!] [Server] [Num={request_number}] [Timeout] segment num={request_number} timeout, resending previous ACK..")
-                    message_ACK = Segment()
-                    message_ACK.set_header({
-                        "seq_num": 0,
-                        "ack_num": request_number - 1
-                    })
-                    message_ACK.set_flag([segment.ACK_FLAG])
-                    self.conn.send_data(message_ACK, addr)
-                    print(f"[!] [Server] Sending segment {request_number - 1} acknowledgement")
+                    if (request_number > 0):
+                        print(f"\n[!] [Server] [Num={request_number}] [Timeout] segment num={request_number} timeout, resending previous ACK..")
+                        message_ACK = Segment()
+                        message_ACK.set_header({
+                            "seq_num": 0,
+                            "ack_num": request_number - 1
+                        })
+                        message_ACK.set_flag([segment.ACK_FLAG])
+                        self.conn.send_data(message_ACK, addr)
+                        print(f"[!] [Server] Sending segment {request_number - 1} acknowledgement")
         
 
 
