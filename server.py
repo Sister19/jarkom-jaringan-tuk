@@ -2,22 +2,24 @@ from lib.connection import Connection
 from lib.segment import Segment
 import lib.segment as segment
 import socket
+
+import sys
 import os
 
-IP = "127.0.0.1"
-PORT = 3000
 FILE = "server.py"
-N = 4
+IP = "127.0.0.1"
+N = 3
 # MAX_SEGMENT_PAYLOAD = 32756
 MAX_SEGMENT_PAYLOAD = 1000
-
 
 class Server:
     def __init__(self):
         # Init server
         # self.conn = Connection("localhost", 3121)
-        self.conn = Connection(IP, PORT)
-        print(f"[!] Server started at localhost:{PORT}")
+        self.port = int(sys.argv[1])
+        self.file = sys.argv[2]
+        self.conn = Connection(IP, self.port)
+        print(f"[!] Server started at localhost:{self.port}")
         print(f"[!] Source file | README.md | 1012 bytes")
         print(f"[!] Listening to broadcast address for clients.\n")
         self.clients = []

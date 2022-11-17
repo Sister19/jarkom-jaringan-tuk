@@ -3,9 +3,9 @@ from lib.segment import Segment
 import lib.segment as segment
 import socket
 
+import sys
 
 IP = "127.0.0.1"
-PORT = 1234
 BROADCAST_PORT = 3000
 N = 4
 FILE = "output.py"
@@ -13,20 +13,23 @@ FILE = "output.py"
 class Client:
     def __init__(self):
         # Init client
-        self.conn = Connection(IP, PORT)
-        print(f"Client started at {IP}:{PORT}")
+        # self.conn = Connection("localhost", 3120)
+        self.port = int(sys.argv[1])
+        self.conn = Connection(IP, self.port)
+        self.broadcast_port = int(sys.argv[2])
+        print(f"Client started at {IP}:{self.port}")
 
     def three_way_handshake(self):
         # Three Way Handshake, client-side
         print("[!] Starting three way handshake...")
-        print(f"[!] Sending SYN segment request to port {BROADCAST_PORT}")
+        print(f"[!] Sending SYN segment request to port {self.broadcast_port}")
         message_SYN = Segment()
         message_SYN.set_header({
             "seq_num": 0,
             "ack_num": 0
         })
         message_SYN.set_flag([segment.SYN_FLAG])
-        self.conn.send_data(message_SYN, (IP, BROADCAST_PORT))
+        self.conn.send_data(message_SYN, (IP, self.broadcast_port))
     
     def three_way_handshake_response(self):
         addr, segment_response = self.conn.listen_single_segment()
@@ -35,7 +38,7 @@ class Client:
             segment_response.flag.ack  # 
             and segment_response.flag.syn
             and segment_response.valid_checksum()  # check if the request contains no error when transmitting with checksum
-            and addr == (IP, BROADCAST_PORT)
+            and addr == (IP, self.broadcast_port)
         ):
             print(f"[!] Received SYN, ACK response from {addr}")
             message_ACK = Segment()
@@ -65,7 +68,7 @@ class Client:
                 try:
                     addr, segment_response = self.conn.listen_single_segment()
 
-                    if addr == (IP, BROADCAST_PORT) and segment_response.flag.fin:
+                    if addr == (IP, self.broadcast_port) and segment_response.flag.fin:
                         print(f"[!] [Server] Segment FIN received")
                         message_ACK_FIN = Segment()
                         message_ACK_FIN.set_header({
@@ -83,7 +86,7 @@ class Client:
 
                         break
                     
-                    if addr == (IP, BROADCAST_PORT) and not segment_response.flag.ack and not segment_response.flag.fin and not segment_response.flag.syn:
+                    if addr == (IP, self.broadcast_port) and not segment_response.flag.ack and not segment_response.flag.fin and not segment_response.flag.syn:
                         print(f"[!] [Server] Segment {segment_response.header['seq_num']} received")
                         if segment_response.header["seq_num"] == request_number:
                             message_ACK = Segment()
