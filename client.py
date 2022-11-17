@@ -6,9 +6,8 @@ import socket
 import sys
 
 IP = "127.0.0.1"
-BROADCAST_PORT = 3000
-N = 4
-FILE = "output.py"
+N = 3
+# FILE = "output.py"
 
 class Client:
     def __init__(self):
@@ -17,6 +16,7 @@ class Client:
         self.port = int(sys.argv[1])
         self.conn = Connection(IP, self.port)
         self.broadcast_port = int(sys.argv[2])
+        self.file = sys.argv[3]
         print(f"Client started at {IP}:{self.port}")
 
     def three_way_handshake(self):
@@ -59,10 +59,10 @@ class Client:
         request_number = 0
 
         bytes_array = bytes()
-        with open(FILE, "wb") as file:
+        with open(self.file, "wb") as file:
             file.write(bytes_array)
         
-        with open(FILE, "ab") as file:
+        with open(self.file, "ab") as file:
             while True:
                 self.conn.set_timeout(3)
                 try:
@@ -100,7 +100,7 @@ class Client:
 
                             file.write(segment_response.get_payload())
 
-                            print(f"[!] Segment {segment_response.header['seq_num']} written to file {FILE}")
+                            print(f"[!] Segment {segment_response.header['seq_num']} written to file {self.file}")
                             
                             request_number += 1
                         else:
