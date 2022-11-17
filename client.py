@@ -1,9 +1,9 @@
 from lib.connection import Connection
 from lib.segment import Segment
 import lib.segment as segment
+import sys
 
 IP = "127.0.0.1"
-PORT = 1234
 BROADCAST_PORT = 3000
 N = 4
 
@@ -11,8 +11,9 @@ class Client:
     def __init__(self):
         # Init client
         # self.conn = Connection("localhost", 3120)
-        self.conn = Connection(IP, PORT)
-        print(f"Client started at {IP}:{PORT}")
+        self.port = int(sys.argv[1])
+        self.conn = Connection(IP, self.port)
+        print(f"Client started at {IP}:{self.port}")
 
     def three_way_handshake(self):
         # Three Way Handshake, client-side
