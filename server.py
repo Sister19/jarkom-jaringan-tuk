@@ -2,17 +2,19 @@ from lib.connection import Connection
 from lib.segment import Segment
 import lib.segment as segment
 import socket
-
 import sys
 import os
+from dotenv import load_dotenv
 
-IP = "127.0.0.1"
-N = 5
-MAX_SEGMENT_PAYLOAD = 32756
+load_dotenv()
+IP = os.getenv("IP")
+N = int(os.getenv("N"))
+MAX_SEGMENT_PAYLOAD = int(os.getenv("MAX_SEGMENT_PAYLOAD"))
 
 class Server:
     def __init__(self):
         # Init server
+        print(type(os.getenv('N')))
         self.port = int(sys.argv[1])
         self.file = sys.argv[2]
         self.conn = Connection(IP, self.port)

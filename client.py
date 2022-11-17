@@ -2,11 +2,13 @@ from lib.connection import Connection
 from lib.segment import Segment
 import lib.segment as segment
 import socket
-
 import sys
+import os
+from dotenv import load_dotenv
 
-IP = "127.0.0.1"
-N = 5
+load_dotenv()
+IP = os.getenv("IP")
+N = int(os.getenv("N"))
 
 class Client:
     def __init__(self):
