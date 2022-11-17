@@ -21,7 +21,7 @@ class Connection:
 
     def listen_single_segment(self):
         # Listen single UDP datagram within timeout and convert into segment
-        response, address = self.socket.recvfrom(2**16)
+        response, address = self.socket.recvfrom(2**15)
         data = Segment()
         data.set_from_bytes(response)
         return address, data

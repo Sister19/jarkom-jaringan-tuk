@@ -6,7 +6,6 @@ import socket
 import sys
 import os
 
-FILE = "server.py"
 IP = "127.0.0.1"
 N = 3
 MAX_SEGMENT_PAYLOAD = 32756
@@ -78,8 +77,8 @@ class Server:
     def file_transfer(self, client_addr : ("ip", "port")):
         sequence_base = 0
         sequence_max = N
-        with open(FILE, "rb") as file:
-            file_size = os.path.getsize(FILE)
+        with open(self.file, "rb") as file:
+            file_size = os.path.getsize(self.file)
             total_segment_number = file_size // MAX_SEGMENT_PAYLOAD if file_size % MAX_SEGMENT_PAYLOAD == 0  else (file_size // MAX_SEGMENT_PAYLOAD) + 1
             sequence_max = min(total_segment_number, sequence_max)
 

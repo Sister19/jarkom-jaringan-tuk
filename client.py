@@ -59,10 +59,10 @@ class Client:
         request_number = 0
 
         bytes_array = bytes()
-        with open(self.file, "wb") as file:
-            file.write(bytes_array)
+        # with open(self.file, "wb") as file:
+        #     file.write(bytes_array)
         
-        with open(self.file, "ab") as file:
+        with open(self.file, "bw") as file:
             while True:
                 self.conn.set_timeout(3)
                 try:
@@ -88,6 +88,7 @@ class Client:
                     
                     if addr == (IP, self.broadcast_port) and not segment_response.flag.ack and not segment_response.flag.fin and not segment_response.flag.syn:
                         print(f"[!] [Server] Segment {segment_response.header['seq_num']} received")
+                        # print(segment_response)
                         if segment_response.header["seq_num"] == request_number:
                             message_ACK = Segment()
                             message_ACK.set_header({
