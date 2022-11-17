@@ -17,7 +17,7 @@ class Server:
         self.file = sys.argv[2]
         self.conn = Connection(IP, self.port)
         print(f"[!] Server started at localhost:{self.port}")
-        print(f"[!] Source file | README.md | 1012 bytes")
+        print(f"[!] Source file | {self.file} | {os.path.getsize(self.file)} bytes")
         print(f"[!] Listening to broadcast address for clients.\n")
         self.clients = []
 
