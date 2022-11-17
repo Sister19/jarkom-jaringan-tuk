@@ -9,8 +9,8 @@ import os
 FILE = "server.py"
 IP = "127.0.0.1"
 N = 3
-# MAX_SEGMENT_PAYLOAD = 32756
-MAX_SEGMENT_PAYLOAD = 1000
+MAX_SEGMENT_PAYLOAD = 32756
+# MAX_SEGMENT_PAYLOAD = 1000
 
 class Server:
     def __init__(self):
