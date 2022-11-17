@@ -6,13 +6,12 @@ import socket
 import sys
 
 IP = "127.0.0.1"
-N = 3
+N = 5
 # FILE = "output.py"
 
 class Client:
     def __init__(self):
         # Init client
-        # self.conn = Connection("localhost", 3120)
         self.port = int(sys.argv[1])
         self.conn = Connection(IP, self.port)
         self.broadcast_port = int(sys.argv[2])
@@ -53,6 +52,8 @@ class Client:
 
 
     def listen_file_transfer(self):
+        sequence_number_list = []
+
         # File transfer, client-side
         print("Receiving file...")
 
@@ -64,66 +65,61 @@ class Client:
         
         with open(self.file, "bw") as file:
             while True:
-                self.conn.set_timeout(3)
-                try:
-                    addr, segment_response = self.conn.listen_single_segment()
+                addr, segment_response = self.conn.listen_single_segment()
 
-                    if addr == (IP, self.broadcast_port) and segment_response.flag.fin:
-                        print(f"[!] [Server] Segment FIN received")
-                        message_ACK_FIN = Segment()
-                        message_ACK_FIN.set_header({
-                            "seq_num": 0,
-                            "ack_num": 0
-                        })
-                        message_ACK_FIN.set_flag([segment.ACK_FLAG, segment.FIN_FLAG])
-                        self.conn.send_data(message_ACK_FIN, addr)
+                if addr == (IP, self.broadcast_port) and segment_response.flag.fin:
+                    print(f"[!] [Server] Segment FIN received")
+                    message_ACK_FIN = Segment()
+                    message_ACK_FIN.set_header({
+                        "seq_num": 0,
+                        "ack_num": 0
+                    })
+                    message_ACK_FIN.set_flag([segment.ACK_FLAG, segment.FIN_FLAG])
+                    self.conn.send_data(message_ACK_FIN, addr)
 
-                        print(f"[!] [Server] Sending segment FIN acknowledgement")
-                        print("\nFile received")
-                        print(f"Closing connection...")
-                        self.conn.close_socket()
-                        print(f"Connection closed")
+                    print(f"[!] [Server] Sending segment FIN acknowledgement")
+                    print("\nFile received")
+                    print(f"Closing connection...")
+                    self.conn.close_socket()
+                    print(f"Connection closed")
 
-                        break
+                    break
                     
-                    if addr == (IP, self.broadcast_port) and not segment_response.flag.ack and not segment_response.flag.fin and not segment_response.flag.syn:
-                        print(f"[!] [Server] Segment {segment_response.header['seq_num']} received")
-                        # print(segment_response)
-                        if segment_response.header["seq_num"] == request_number:
-                            message_ACK = Segment()
-                            message_ACK.set_header({
-                                "seq_num": 0,
-                                "ack_num": segment_response.header['seq_num']
-                            })
-                            message_ACK.set_flag([segment.ACK_FLAG])
-                            self.conn.send_data(message_ACK, addr)
-                            print(f"[!] [Server] Sending segment {segment_response.header['seq_num']} acknowledgement")
-
-                            file.write(segment_response.get_payload())
-
-                            print(f"[!] Segment {segment_response.header['seq_num']} written to file {self.file}")
-                            
-                            request_number += 1
-                        else:
-                            print(f"[!] [Server] Segment {segment_response.header['seq_num']} is not acknowleged")
-                            raise socket.timeout
-                    else:
-                        print(f"[!] [Server] Segment received")
-                        print(f"[!] [Server] Segment is not acknowleged")
-                        raise socket.timeout
-
-                        
-                except socket.timeout:
-                    if (request_number > 0):
-                        print(f"\n[!] [Server] [Num={request_number}] [Timeout] segment num={request_number} timeout, resending previous ACK..")
+                if addr == (IP, self.broadcast_port) and not segment_response.flag.ack and not segment_response.flag.fin and not segment_response.flag.syn:
+                    print(f"[!] [Server] Segment {segment_response.header['seq_num']} received")
+                    if segment_response.header["seq_num"] == request_number:
                         message_ACK = Segment()
                         message_ACK.set_header({
                             "seq_num": 0,
-                            "ack_num": request_number - 1
+                            "ack_num": segment_response.header['seq_num']
                         })
                         message_ACK.set_flag([segment.ACK_FLAG])
                         self.conn.send_data(message_ACK, addr)
-                        print(f"[!] [Server] Sending segment {request_number - 1} acknowledgement")
+                        print(f"[!] [Server] Sending segment {segment_response.header['seq_num']} acknowledgement")
+
+                        file.write(segment_response.get_payload())
+                        sequence_number_list.append(int(segment_response.header['seq_num']))
+
+                        print(f"[!] Segment {segment_response.header['seq_num']} written to file {self.file}")
+                        
+                        request_number += 1
+                    elif int(segment_response.header['seq_num']) in sequence_number_list:
+                        print(f"[!] [Server] Segment {segment_response.header['seq_num']} is already accepted")
+                        message_ACK = Segment()
+                        message_ACK.set_header({
+                            "seq_num": 0,
+                            "ack_num": segment_response.header['seq_num']
+                        })
+                        message_ACK.set_flag([segment.ACK_FLAG])
+                        self.conn.send_data(message_ACK, addr)
+                        print(f"[!] [Server] Sending segment {segment_response.header['seq_num']} acknowledgement")
+                    else:
+                        print(f"[!] [Server] Segment {segment_response.header['seq_num']} is not acknowleged")
+                
+                
+                else:
+                    print(f"[!] [Server] Segment received")
+                    print(f"[!] [Server] Segment is not acknowleged")
         
 
 

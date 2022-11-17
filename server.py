@@ -7,14 +7,13 @@ import sys
 import os
 
 IP = "127.0.0.1"
-N = 3
+N = 5
 MAX_SEGMENT_PAYLOAD = 32756
 # MAX_SEGMENT_PAYLOAD = 1000
 
 class Server:
     def __init__(self):
         # Init server
-        # self.conn = Connection("localhost", 3121)
         self.port = int(sys.argv[1])
         self.file = sys.argv[2]
         self.conn = Connection(IP, self.port)
@@ -118,7 +117,7 @@ class Server:
                     print(f"[!] [Client] [Num={sequence_max - 1}] Sending segment to client...")
             
                 while sequence_base < sequence_max:
-                    self.conn.set_timeout(3)
+                    self.conn.set_timeout(0.4)
                     try:
                         addr, segment_response = self.conn.listen_single_segment()
                         if addr == client_addr and segment_response.flag.ack and segment_response.header["ack_num"] == sequence_base:
@@ -137,7 +136,9 @@ class Server:
                         break
 
             send_fin = True
-            while send_fin:
+            max_fin_loop = 10
+            fin_loop = 0
+            while send_fin and fin_loop < max_fin_loop:
                 message_FIN = Segment()
                 message_FIN.set_header({
                     "seq_num": 0,
@@ -148,7 +149,7 @@ class Server:
                 print(f"[!] [FIN] Sending FIN..")
                 self.conn.send_data(message_FIN, client_addr)
 
-                self.conn.set_timeout(3)
+                self.conn.set_timeout(0.4)
                 try:
                     addr, segment_response = self.conn.listen_single_segment()
                     if addr == client_addr and segment_response.flag.ack and segment_response.flag.fin and not segment_response.flag.syn:
@@ -157,6 +158,11 @@ class Server:
 
                 except socket.timeout:
                     print(f"\n[!] [Client] [FIN] [Timeout] ACK response timeout, resending FIN segment..")
+                
+                fin_loop += 1
+            
+            if max_fin_loop == fin_loop:
+                print(f"[!] [Client] [FIN] [Timeout] ACK response timeout, force close connection")
 
     def three_way_handshake(self, client_addr: ("ip", "port")) -> bool:
        # Three way handshake, server-side, 1 client
