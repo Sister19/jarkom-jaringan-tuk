@@ -9,7 +9,6 @@ import os
 IP = "127.0.0.1"
 N = 5
 MAX_SEGMENT_PAYLOAD = 32756
-# MAX_SEGMENT_PAYLOAD = 1000
 
 class Server:
     def __init__(self):
@@ -32,6 +31,8 @@ class Server:
 
             if (
                 segment.flag.syn  # Check if request if from client that wants to establish connection
+                and not segment.flag.ack
+                and not segment.flag.fin
                 and segment.valid_checksum()  # check if the request contains no error when transmitting with checksum
                 and addr not in self.clients  # check if client is already in client list
             ):
@@ -120,7 +121,7 @@ class Server:
                     self.conn.set_timeout(0.4)
                     try:
                         addr, segment_response = self.conn.listen_single_segment()
-                        if addr == client_addr and segment_response.flag.ack and segment_response.header["ack_num"] == sequence_base:
+                        if addr == client_addr and segment_response.flag.ack and not segment_response.flag.syn and not segment_response.flag.fin and segment_response.header["ack_num"] == sequence_base:
                             sequence_base = sequence_base + 1
                             sequence_max = min(total_segment_number, sequence_max + 1)
 
@@ -176,24 +177,35 @@ class Server:
         print(f"[!] Sending SYNC, ACK segment response to port {client_addr[1]}")
         return self.three_way_handshake_response(client_addr)
 
-        
-    
     def three_way_handshake_response(self, client_addr: ("ip", "port")):
-        self.conn.set_timeout(200)
+        self.conn.set_timeout(5)
         try:
             addr, segment_response = self.conn.listen_single_segment()
 
             if (
                 segment_response.flag.ack  # Check if request if from client that wants to establish connection
+                and not segment_response.flag.syn
+                and not segment_response.flag.fin
                 and segment_response.valid_checksum()  # check if the request contains no error when transmitting with checksum
                 and addr == client_addr # check if client is already in client list
             ):
                 print(f"[!] Received ACK response from client {addr}")
                 return True
-            else:
+            elif (
+                not segment_response.flag.ack  # Check if request if from client that wants to establish connection
+                and segment_response.flag.syn
+                and not segment_response.flag.fin
+                and segment_response.valid_checksum()  # check if the request contains no error when transmitting with checksum
+                and addr == client_addr # check if client is already in client list
+            ):
+                print(f"[!] Received SYN response from client {addr}, expected ACK")
                 return False
+            else:
+                print(f"[!] Received unknown response")
+                print(f"[!] Retrying three way handshake")
+                return self.three_way_handshake(client_addr)
         except socket.timeout:
-            print("Lewat timeout")
+            print(f"\n[!] [Client] [ACK] [Timeout] ACK response timeout")
             return False
 
 
